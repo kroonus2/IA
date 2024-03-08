@@ -48,7 +48,3 @@ O algoritmo de Hebb é uma regra de aprendizado associativa não supervisionada.
 
 O perceptron é um algoritmo de aprendizado supervisionado usado para classificação binária. Em nossa aplicação, utilizamos o perceptron para realizar operações lógicas como "and", "or", "xor", "nor" e "nand". O perceptron é capaz de aprender fronteiras de decisão lineares e é um bloco de construção fundamental em muitos modelos de aprendizado de máquina mais complexos.
 
-Esperamos que este repositório seja útil para seus estudos em Inteligência Artificial! Se tiver alguma dúvida ou sugestão, sinta-se à vontade para abrir uma issue ou enviar um pull request.
-Recolher
-message.txt
-3 KB
