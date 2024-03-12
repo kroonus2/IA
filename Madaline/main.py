@@ -1,9 +1,5 @@
-//Codigo da Inteligencia Artificial
-
+# Codigo da Inteligencia Artificial
 import PySimpleGUI as sg
-import aprendizadoDeHebb
-
-# aprendizadoDeHebb.AprendizadoHebb()
 
 # Defina o cabeçalho
 header = [
