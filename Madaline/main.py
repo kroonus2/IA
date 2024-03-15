@@ -1,15 +1,18 @@
-# Codigo da Inteligencia Artificial
 import PySimpleGUI as sg
+import numpy as np
+import madaline as md
+from targets import Targets
 
 # Defina o cabeçalho
 header = [
     sg.Text('Tabela 01', pad=(0, 0), size=(10, 2), justification='c'),
-    sg.Text('Tabela 02', pad=(0, 0), size=(10, 2), justification='c')
+    sg.Text('Letra inserida', pad=(0, 0), size=(10, 2), justification='c'),
 ]
 
 # Defina as células das tabelas
 coluna1 = []
-coluna2 = []
+letras = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+          'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 # Adicione as células das tabelas
 for row in range(0, 8):
@@ -23,28 +26,19 @@ for row in range(0, 8):
         sg.Input(size=(3, 1), pad=(0, 0), key=(row, 6)),
         sg.Input(size=(3, 1), pad=(0, 0), key=(row, 7))
     ])
-    coluna2.append([
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 0 + 8)),
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 1 + 8)),
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 2 + 8)),
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 3 + 8)),
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 4 + 8)),
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 5 + 8)),
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 6 + 8)),
-        sg.Input(size=(3, 1), pad=(0, 0), key=(row, 7 + 8))
-    ])
-
+combo_letras = sg.Combo(letras, size=(5, len(letras)),
+                        enable_events=True, key='-LETRA-', default_value='A')
 
 layout = [
-    [header, sg.Column(coluna1, element_justification='c'),
-     sg.Column(coluna2, element_justification='c')]
+    [header, sg.Column(coluna1, element_justification='c'), combo_letras]
 ]
 
-layout.append([sg.Button("Treinar"), sg.Button(
-    "Testar"), sg.Button("Limpar Tabela 1")])
+layout.append([sg.Button("Add Letra"), sg.Button("Salvar Letras"), sg.Button("Treinar"), sg.Button(
+    "Testar"), sg.Button("Limpar")])
 
 # Crie a janela
-window = sg.Window("Planilhas 8x8", layout, element_justification='c')
+window = sg.Window("Planilhas 8x8 - Madaline",
+                   layout, element_justification='c')
 
 
 def pegar_Valores(colunas):
@@ -59,23 +53,58 @@ def pegar_Valores(colunas):
     return valores_matrizes
 
 
+# Listas para armazenar os vetores a serem salvos
+entradas_a_serem_salvas = []
+targets_a_serem_salvos = []
+
 # Loop de eventos
 while True:
     event, values = window.read()
     if event == sg.WINDOW_CLOSED or event == "Fechar":
         break
+    elif event == 'Add Letra':
+        vetor_tabela1 = pegar_Valores([coluna1])
+        entradas_a_serem_salvas.append(vetor_tabela1)
+        letra_selecionada = values['-LETRA-']
+        target_letra = Targets[letra_selecionada].value
+        targets_a_serem_salvos.append(target_letra)
+        sg.popup_ok("\nLetra adicionada com sucesso!")
+    elif event == 'Salvar Letras':
+        # Converter a lista de vetores em uma matriz numpy
+        entradas_a_serem_salvas = np.array(entradas_a_serem_salvas)
+        # Abre o arquivo 'entradas.txt' em modo de escrita e adiciona os vetores formatados
+        with open('D:\\IA\\Madaline\\dados\\entradas.txt', 'a') as arquivo:
+            for vetor in entradas_a_serem_salvas:
+                vetor_str = ' '.join(str(x) for x in vetor)
+                arquivo.write(vetor_str + '\n')
+            # Adiciona uma linha em branco entre cada letra
+            arquivo.write('\n')
+        # Salvar os targets em 'targs.txt'
+        with open('D:\\IA\\Madaline\\dados\\targs.txt', 'a') as arquivo:
+            for target in targets_a_serem_salvos:
+                arquivo.write(target + '\n')
+            arquivo.write('\n')
+        sg.popup_ok("\nLetra salva com sucesso!")
+    # No evento 'Treinar'
     elif event == 'Treinar':
-        vetor_tabela1 = pegar_Valores([coluna1])
-        vetor_tabela2 = pegar_Valores([coluna2])
-
-        resultado = aprendizadoDeHebb.treinamentoHebb(
-            vetor_tabela1, vetor_tabela2)
-        sg.popup_ok(resultado + "\nPara testar use a Tabela 1")
+        rede_treinada = md.treinamento()
+        sg.popup_ok("Rede em treinamento...")
+        if rede_treinada:
+            sg.popup_ok("Rede treinada com sucesso!")
+        else:
+            sg.popup_ok("A rede não convergiu ou atingiu o limite de ciclos.")
     elif event == 'Testar':
-        vetor_tabela1 = pegar_Valores([coluna1])
-        resultado = aprendizadoDeHebb.testeHebb(vetor_tabela1)
-        sg.popup_ok(resultado)
-    elif event == 'Limpar Tabela 1':
+        vetor_teste = pegar_Valores([coluna1])
+        resultado = md.teste(vetor_teste)
+        print(vetor_teste)
+        letra_resultado = ''
+        for target in Targets:
+            target_array = np.array([int(x) for x in target.value.split(';')])
+            if np.all(resultado == target_array):
+                letra_resultado = target.name
+                break
+        sg.popup_ok(f'O resultado é a letra: {letra_resultado}')
+    elif event == 'Limpar':
         for row in range(8):
             for column in range(8):
                 window[(row, column)].update('')

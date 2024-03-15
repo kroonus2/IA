@@ -2,108 +2,101 @@ import os
 import numpy as np
 import random as rd
 
+# Carregamento das entradas.
+entAux = np.loadtxt('D:\\IA\\Madaline\\dados\\entradas.txt')
+padroes, entradas = entAux.shape
 
-def carregarArquivo():
-    # Puxar o arquivo txt com as inumeras letras possiveis inseridas pelo usuario
-    os.chdir(r'C:\\Users\\CAUPT - ALUNOS\\Documents\\ExemploMadaline')
-    entAux = np.loadtxt('Ent.txt')
-    # Serão 7 letras de 63 entradas cada.
-    (padroes, entradas) = np.shape(entAux)
-    targAux = np.loadtxt('Targ.csv', delimiter=';', skiprows=0)
-    (numSaidas, targets) = np.shape(targAux)  # Teremos 7 saídas.
-    return entAux, padroes, entradas, targAux, numSaidas
+# Carregamento das saídas.
+targAux = np.loadtxt(
+    'D:\\IA\\Madaline\\dados\\targs.txt', delimiter=';', skiprows=0)
+numSaidas = targAux.shape[1]  # Pegar o tamanho da segunda dimensão
+
+limiar = 0.0
+alfa = 0.001
+v = np.random.uniform(-0.1, 0.1, (entradas, numSaidas))  # Pesos[63][7]
+# V0[7] Um bias para cada saída
+v0 = np.random.uniform(-0.1, 0.1, numSaidas)
+
+# Saídas calculadas pela rede.
+yin = np.zeros((numSaidas, 1))
+y = np.zeros((numSaidas, 1))
 
 
-def treinamento(entAux, padroes, entradas, targAux, numSaidas):
-    limiar = 0.0
-    alfa = 0.01
-    errotolerado = 0.01
-    v = np.zeros((entradas, numSaidas))  # Pesos[63][7]
-    for i in range(entradas):
-        for j in range(numSaidas):
-            v[i][j] = rd.uniform(-0.1, 0.1)
+def treinamento():
+    global entAux, padroes, entradas, targAux, numSaidas, yin, y, limiar, v, v0
 
-    v0 = np.zeros((numSaidas))  # V0[7] Um bias para cada saída.
-    for j in range(numSaidas):
-        v0[j] = rd.uniform(-0.1, 0.1)
+    errotolerado = 6.9
 
-    # Saídas calculadas pela rede.
-    yin = np.zeros((numSaidas, 1))
-    y = np.zeros((numSaidas, 1))
-
-    erro = 1
+    erro = 10
     ciclo = 0
-
-    while erro > errotolerado:
-        ciclo = ciclo + 1
+    while erro > errotolerado and ciclo <= 1000:
+        ciclo += 1
         erro = 0
         for i in range(padroes):
-            # Um padrão completo (letra) será arrancado.
             padraoLetra = entAux[i, :]
 
             for m in range(numSaidas):
                 soma = 0
                 for n in range(entradas):
-                    soma = soma + padraoLetra[n]*v[n][m]  # Entrada x peso.
+                    soma += padraoLetra[n] * v[n][m]
                 yin[m] = soma + v0[m]
 
-            for j in range(numSaidas):
-                if yin[j] >= limiar:
-                    y[j] = 1.0
-                else:
-                    y[j] = -1.0
+            # usando degrau - rede não coverge - problema por conta do degrau
+            # for j in range(numSaidas):
+            #     if yin[j] >= limiar:
+            #         y[j] = 1.0
+            #     else:
+            #         y[j] = -1.0
+
+            # usando tangente hiberbolica - rede converge
+            y = np.tanh(yin)
 
             for j in range(numSaidas):
-                erro = erro + 0.5*((targAux[j][i]-y[j])**2)
+                erro += 0.5 * ((targAux[i][j] - y[j]) ** 2)
 
-            vanterior = v
-
+            vanterior = v.copy()
             for m in range(entradas):
                 for n in range(numSaidas):
-                    v[m][n] = vanterior[m][n]+alfa * \
-                        (targAux[n][i]-y[n])*padraoLetra[m]
-
-            v0anterior = v0
-
+                    v[m][n] = vanterior[m][n] + alfa * \
+                        (targAux[i][n] - y[n]) * padraoLetra[m]
+            v0anterior = v0.copy()
             for j in range(numSaidas):
-                v0[j] = v0anterior[j] + alfa*(targAux[j][i]-y[j])
+                v0[j] = v0anterior[j] + alfa * (targAux[i][j] - y[j])
+        print(f'ciclo:: {ciclo}')
+        print(f'erro:: {erro}')
 
-        print(ciclo)
-        print(erro)
+    return erro <= errotolerado or ciclo >= 1000
 
 
-def testar(entAux, numSaidas, entradas, v, v0):
-    limiar = 0.0
-    yin = np.zeros((numSaidas, 1))
-    y = np.zeros((numSaidas, 1))
-    entTeste = entAux[6, :]
+def teste(entTeste):
+    global entradas, numSaidas, v, v0
+    # Teste
+    # Rede treinada com sucesso.
     for j in range(numSaidas):
         soma = 0
         for i in range(entradas):
             soma = soma + entTeste[i]*v[i][j]
         yin[j] = soma + v0[j]
 
-    print(yin)
-    for j in range(numSaidas):
-        if yin[j] >= limiar:
-            y[j] = 1.0
-        else:
-            y[j] = -1.0
+    # for j in range(numSaidas):
+    #     if yin[j] >= limiar:
+    #         y[j] = 1.0
+    #     else:
+    #         y[j] = -1.0
+
+    # usando tangente hiberbolica - rede converge
+    y = np.tanh(yin)
+
     print(y)
+    return (y)
 
 
-# Carregamento dos arquivos
-entAux, padroes, entradas, targAux, numSaidas = carregarArquivo()
+# treinamento()
 
-# Treinamento
-treinamento(entAux, padroes, entradas, targAux, numSaidas)
+# # Teste resultado A
+teste(([-1, -1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -
+      1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, 1]))
 
-# Teste
-v = np.zeros((entradas, numSaidas))  # Pesos[63][7]
-for i in range(entradas):
-    for j in range(numSaidas):
-        v[i][j] = rd.uniform(-0.1, 0.1)
-v0 = np.zeros((numSaidas))  # V0[7] Um bias para cada saída.
-for j in range(numSaidas):
-    v0[j] = rd.uniform(-0.1, 0.1)
-testar(entAux, numSaidas, entradas, v, v0)
+# Teste resultado B
+# teste(([1, 1, 1, 1, 1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, 1, -1,
+#       1, 1, 1, -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1]))
