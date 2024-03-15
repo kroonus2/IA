@@ -76,15 +76,17 @@ while True:
         with open('D:\\IA\\Madaline\\dados\\entradas.txt', 'a') as arquivo:
             for vetor in entradas_a_serem_salvas:
                 vetor_str = ' '.join(str(x) for x in vetor)
-                arquivo.write(vetor_str + '\n')
+                arquivo.write(vetor_str + '\n\n')
             # Adiciona uma linha em branco entre cada letra
-            arquivo.write('\n')
+            # arquivo.write('\n')
         # Salvar os targets em 'targs.txt'
         with open('D:\\IA\\Madaline\\dados\\targs.txt', 'a') as arquivo:
             for target in targets_a_serem_salvos:
-                arquivo.write(target + '\n')
-            arquivo.write('\n')
+                arquivo.write(target + '\n\n')
+            # arquivo.write('\n')
         sg.popup_ok("\nLetra salva com sucesso!")
+        entradas_a_serem_salvas = []
+        targets_a_serem_salvos = []
     # No evento 'Treinar'
     elif event == 'Treinar':
         rede_treinada = md.treinamento()
@@ -97,13 +99,7 @@ while True:
         vetor_teste = pegar_Valores([coluna1])
         resultado = md.teste(vetor_teste)
         print(vetor_teste)
-        letra_resultado = ''
-        for target in Targets:
-            target_array = np.array([int(x) for x in target.value.split(';')])
-            if np.all(resultado == target_array):
-                letra_resultado = target.name
-                break
-        sg.popup_ok(f'O resultado é a letra: {letra_resultado}')
+        sg.popup_ok(f'Target Obtido:\n{resultado}')
     elif event == 'Limpar':
         for row in range(8):
             for column in range(8):
