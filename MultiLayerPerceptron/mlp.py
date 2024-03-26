@@ -3,7 +3,6 @@ import numpy as np
 
 # Para porta XOR
 # https://edisciplinas.usp.br/pluginfile.php/4445475/mod_resource/content/1/rn_5_mlp_1.pdf
-# https://gist.github.com/Jalalx/a9051b325f066faae6572dae1180baa1
 # https://www.kaggle.com/code/alvations/xor-with-mlp
 
 
