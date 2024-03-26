@@ -1,1 +1,0 @@
-# Codigo da Inteligencia Artificial
